@@ -4,19 +4,46 @@
  *   SLICE 1
  **************/
 
-function updateCoffeeView(coffeeQty) {}
+function updateCoffeeView(coffeeQty) {
+  const coffeeCounter = document.getElementById('coffee_counter');
+  coffeeCounter.innerText = coffeeQty;
+}
 
-function clickCoffee(data) {}
+function clickCoffee(data) {
+  // const bigCoffee = document.getElementById('big_coffee');
+  // bigCoffee.addEventListener('click', () => {});
+
+  data.coffee += 1;
+  updateCoffeeView(data.coffee);
+  renderProducers(data);
+}
 
 /**************
  *   SLICE 2
  **************/
 
-function unlockProducers(producers, coffeeCount) {}
+function unlockProducers(producers, coffeeCount) {
+  producers.forEach(producer => {
+    if (producer.price / 2 <= coffeeCount) producer.unlocked = true;
+  });
+}
 
-function getUnlockedProducers(data) {}
+function getUnlockedProducers(data) {
+  return data.producers.filter(producer => {
+    return producer.unlocked === true;
+  });
+}
 
-function makeDisplayNameFromId(id) {}
+function makeDisplayNameFromId(id) {
+  const name = id
+    .split('_')
+    .map(nameChunk => {
+      const capitalizedFirst = nameChunk.slice(0, 1).toUpperCase();
+      return capitalizedFirst + nameChunk.slice(1);
+    })
+    .join(' ');
+  return name;
+}
 
 // You shoulnd't need to edit this function-- its tests should pass once you've written makeDisplayNameFromId
 function makeProducerDiv(producer) {
@@ -39,27 +66,83 @@ function makeProducerDiv(producer) {
   return containerDiv;
 }
 
-function deleteAllChildNodes(parent) {}
+function deleteAllChildNodes(parent) {
+  while (parent.firstChild) parent.removeChild(parent.firstChild);
+}
 
-function renderProducers(data) {}
+function renderProducers(data) {
+  const producerContainer = document.getElementById('producer_container');
+  deleteAllChildNodes(producerContainer);
+  const producers = data.producers;
+  const coffee = data.coffee;
+  unlockProducers(producers, coffee);
+
+  const unlockedProducers = getUnlockedProducers({ producers, coffee });
+
+  unlockedProducers.forEach(producer => {
+    const producerNode = document.createElement('div');
+    producerContainer.appendChild(producerNode);
+  });
+}
 
 /**************
  *   SLICE 3
  **************/
 
-function getProducerById(data, producerId) {}
+function getProducerById(data, producerId) {
+  const producerArr = data.producers.filter(producer => {
+    return producer.id === producerId;
+  });
+  return producerArr[0];
+}
 
-function canAffordProducer(data, producerId) {}
+function canAffordProducer(data, producerId) {
+  const producer = getProducerById(data, producerId);
+  return producer.price <= data.coffee;
+}
 
-function updateCPSView(cps) {}
+function updateCPSView(cps) {
+  const cpsIndicator = document.getElementById('cps');
+  cpsIndicator.innerText = cps;
+}
 
-function updatePrice(oldPrice) {}
+function updatePrice(oldPrice) {
+  return Math.floor(oldPrice * 1.25);
+}
 
-function attemptToBuyProducer(data, producerId) {}
+function attemptToBuyProducer(data, producerId) {
+  const bool = canAffordProducer(data, producerId);
+  if (bool === true) {
+    const producer = getProducerById(data, producerId);
+    producer.qty = producer.qty + 1;
+    data.coffee = data.coffee - producer.price;
+    producer.price = updatePrice(producer.price);
+    data.totalCPS = data.totalCPS + producer.cps;
+    return true;
+  } else {
+    return false;
+  }
+}
 
-function buyButtonClick(event, data) {}
+function buyButtonClick(event, data) {
+  if (event.target.tagName === 'BUTTON') {
+    const targetProducer = event.target.id.slice(4);
+    const bool = attemptToBuyProducer(data, targetProducer);
+    if (bool) {
+      renderProducers(data);
+      updateCoffeeView(data.coffee);
+      updateCPSView(data.totalCPS);
+    } else {
+      window.alert('Not enough coffee!');
+    }
+  }
+}
 
-function tick(data) {}
+function tick(data) {
+  data.coffee = data.coffee + data.totalCPS;
+  updateCoffeeView(data.coffee);
+  renderProducers(data);
+}
 
 /*************************
  *  Start your engines!
@@ -114,6 +197,6 @@ else if (process) {
     updatePrice,
     attemptToBuyProducer,
     buyButtonClick,
-    tick
+    tick,
   };
 }
